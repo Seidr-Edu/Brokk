@@ -1,6 +1,6 @@
 # Brokk
 
-Brokk is the clone service for the pipeline. It pulls a GitHub repository over
+Brokk is the clone service for the pipeline, and the brother of Eitri. It pulls a GitHub repository over
 public HTTPS, checks out an exact commit, materializes recursive submodules and
 Git LFS content, exports a clean working tree, and emits canonical manifests and
 service reports under `/run`.
