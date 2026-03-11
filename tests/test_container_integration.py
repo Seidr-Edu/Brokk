@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import subprocess
 from pathlib import Path
@@ -17,6 +18,18 @@ IMAGE_TAG = "brokk:local"
 
 def docker_run(args: list[str]) -> subprocess.CompletedProcess[str]:
     return subprocess.run(args, capture_output=True, text=True, check=False)
+
+
+def service_container_prefix() -> list[str]:
+    return [
+        "docker",
+        "run",
+        "--rm",
+        "--user",
+        f"{os.getuid()}:{os.getgid()}",
+        "-e",
+        "HOME=/tmp/brokk-home",
+    ]
 
 
 @pytest.fixture(scope="session")
@@ -50,7 +63,7 @@ def test_container_emits_error_report_for_missing_manifest(
     run_dir.mkdir()
     run_dir.chmod(0o777)
 
-    result = docker_run(["docker", "run", "--rm", "-v", f"{run_dir}:/run", built_image])
+    result = docker_run(service_container_prefix() + ["-v", f"{run_dir}:/run", built_image])
 
     assert result.returncode == 0
     report = load_json(run_dir / "outputs" / "run_report.json")
@@ -88,10 +101,8 @@ def test_container_run_emits_outputs(
     )
 
     result = docker_run(
-        [
-            "docker",
-            "run",
-            "--rm",
+        service_container_prefix()
+        + [
             "-e",
             "BROKK_MANIFEST=/run/config/manifest.yaml",
             "-e",
@@ -151,10 +162,8 @@ def test_container_materializes_lfs_content(
     )
 
     result = docker_run(
-        [
-            "docker",
-            "run",
-            "--rm",
+        service_container_prefix()
+        + [
             "-e",
             "BROKK_MANIFEST=/run/config/manifest.yaml",
             "-e",
