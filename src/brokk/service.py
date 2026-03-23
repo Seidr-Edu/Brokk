@@ -4,6 +4,7 @@ import argparse
 import json
 import logging
 import os
+import shutil
 import sys
 import tempfile
 from dataclasses import dataclass
@@ -167,6 +168,7 @@ def main(argv: list[str] | None = None) -> int:
         except OSError as exc:
             logger.error("failed to write report: %s", exc)
             return 1
+        cleanup_workspace_repo(paths, logger)
         return 0
     except ManifestError as exc:
         failure = classify_manifest_error(exc)
@@ -382,7 +384,24 @@ def emit_failure_report(paths: ServicePaths, report: RunReport, logger: logging.
     except OSError as exc:
         logger.error("failed to write summary: %s", exc)
 
+    cleanup_workspace_repo(paths, logger)
     return 0
+
+
+def cleanup_workspace_repo(paths: ServicePaths, logger: logging.Logger) -> None:
+    workspace_repo = paths.workspace_dir / "repo"
+    if not workspace_repo.exists():
+        return
+    try:
+        shutil.rmtree(workspace_repo)
+    except OSError as exc:
+        logger.warning("failed to clean workspace repo %s: %s", workspace_repo, exc)
+        return
+
+    try:
+        paths.workspace_dir.rmdir()
+    except OSError:
+        pass
 
 
 def classify_manifest_error(exc: ManifestError) -> ServiceFailure:
