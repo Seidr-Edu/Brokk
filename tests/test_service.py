@@ -47,6 +47,7 @@ def test_service_clones_exact_historical_commit(
     assert source_manifest["resolved_commit"] == history_remote["first_commit"]
     assert exported_readme == "first\n"
     assert not (run_dir / "artifacts" / "original-repo" / ".git").exists()
+    assert not (run_dir / "workspace" / "repo").exists()
 
 
 def test_service_emits_error_report_for_malformed_yaml(tmp_path: Path) -> None:
@@ -140,6 +141,7 @@ def test_service_emits_failure_for_missing_commit(
     report = load_json(run_dir / "outputs" / "run_report.json")
     assert report["status"] == "failed"
     assert report["reason"] == "commit-not-found"
+    assert not (run_dir / "workspace" / "repo").exists()
 
 
 def test_service_materializes_recursive_submodules(
